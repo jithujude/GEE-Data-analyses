@@ -1,0 +1,182 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var Heron = 
+    /* color: #d61104 */
+    /* shown: false */
+    ee.Feature(
+        ee.Geometry.Point([151.911295343189, -23.442161011840696]),
+        {
+          "station": "HeronIsland",
+          "system:index": "0"
+        }),
+    Orpheus = 
+    /* color: #98ff00 */
+    /* shown: false */
+    ee.Feature(
+        ee.Geometry.Point([146.48454362195682, -18.612515012669252]),
+        {
+          "station": "OrpheusIsland",
+          "system:index": "0"
+        }),
+    Hamilton = 
+    /* color: #0b4a8b */
+    /* shown: false */
+    ee.Feature(
+        ee.Geometry.Point([148.965379531502, -20.34762633731325]),
+        {
+          "station": "HamiltonIsland",
+          "system:index": "0"
+        }),
+    Lizard = 
+    /* color: #ffc82d */
+    /* shown: false */
+    ee.Feature(
+        ee.Geometry.Point([145.44480420186437, -14.668943612692013]),
+        {
+          "station": "LizardIsland",
+          "system:index": "0"
+        }),
+    Daydream = 
+    /* color: #00ffff */
+    /* shown: false */
+    ee.Feature(
+        ee.Geometry.Point([148.81471713305166, -20.255882965067183]),
+        {
+          "station": "DaydreamIsland",
+          "system:index": "0"
+        }),
+    LadyElliot = 
+    /* color: #bf04c2 */
+    /* shown: false */
+    ee.Feature(
+        ee.Geometry.Point([152.71693532247303, -24.114625500890224]),
+        {
+          "station": "LadyElliotIsland",
+          "system:index": "0"
+        }),
+    Green = 
+    /* color: #ff0000 */
+    /* shown: false */
+    ee.Feature(
+        ee.Geometry.Point([145.9767111715088, -16.76042392073961]),
+        {
+          "station": "GreenIsland",
+          "system:index": "0"
+        }),
+    Lowisles = 
+    /* color: #ff3e7b */
+    /* shown: false */
+    ee.Feature(
+        ee.Geometry.Point([145.5601006457078, -16.383572055003572]),
+        {
+          "station": "Lowisles",
+          "system:index": "0"
+        }),
+    Onetree = 
+    /* color: #0000ff */
+    /* shown: false */
+    ee.Feature(
+        ee.Geometry.Point([152.09258888659966, -23.507048289151538]),
+        {
+          "station": "Onetreeisland",
+          "system:index": "0"
+        }),
+    IlotMaitre = 
+    /* color: #009999 */
+    /* shown: false */
+    ee.Feature(
+        ee.Geometry.Point([166.4114971526617, -22.33224252554479]),
+        {
+          "station": "IlotMaitre",
+          "system:index": "0"
+        });
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Allen coral atlas - maximum coral reef acccessible 
+
+// Global Variables
+var distance = 800 // metres we are allowed to snorkel from the station
+
+Map.setOptions('SATELLITE')
+// Field Stations
+// 9 stations from GBR and 1 from New Caledonia
+
+var field_stations = ee.FeatureCollection([Heron, Orpheus, Hamilton, Lizard, Daydream, LadyElliot, Green, Lowisles, Onetree, IlotMaitre])
+print (field_stations)
+Map.addLayer(field_stations,{color : 'yellow'},'Field stations')
+ // Data processing
+var aca = ee.Image("ACA/reef_habitat/v2_0").select("benthic")
+
+var coral = aca
+.eq(15) //returns 1 if true
+Map.addLayer(coral,{palette:['red']},'Coral only')
+
+// add buffer to the stations  
+var station_buffer = ee.Feature(field_stations.first()).buffer(800)
+Map.addLayer(station_buffer)
+
+var buffer = function(feature) { 
+  //aplies buffer to a feature when given a value (num)
+  var buffered = feature.buffer(800)
+  return buffered ;
+} 
+var out = field_stations.map(buffer)
+
+print(out,'out')
+Map.addLayer (out,{colour:'yellow'},'buffered')
+
+var area_pixels = ee.Image(ee.Image.pixelArea()).updateMask(coral)
+
+var coral_area = area_pixels.reduceRegions({
+  reducer: ee.Reducer.sum(),
+  collection: out, //buffered collection
+  scale: 5
+})
+
+print(coral_area, 'coral area')
+Map.addLayer(coral_area,{ color:'blue'}, 'coral area')
+//sorting to find highest coral area under selected stations
+var high_coral = coral_area.sort('sum',false).first()
+print (high_coral, 'highest coral area site')
+Map.addLayer(ee.Feature(high_coral),{ color:'pink'}, 'highest coral area')
+//sorting to find lowest coral area  under selected stations
+var low_coral = coral_area.sort('sum',true).first()
+print (low_coral, 'lowest coral area site')
+Map.addLayer(ee.Feature(low_coral),{ color:'green'}, 'lowest coral area')
+
+// clean
+
+var cleaner = function (feature) {
+  //custom function to clean my output 
+  var clean = {
+    station_name:feature.get('field Station'),
+    area_m2: ee.Number(feature.get('sum')),
+    area_km2: ee.Number(feature.get('sum')).divide(1000*1000),
+    analyst: 'jithu'
+  }
+  return feature.set(clean);
+}
+
+var cleaned_result = coral_area.map(cleaner).sort('area_km2',false)
+print(cleaned_result,'cleaned result')
+
+// ****************************/
+// Package up results and export
+// ****************************/
+
+Export.table.toDrive({
+  collection: cleaned_result, //FYI - type: featureCollection
+  description: 'exportToDrive',
+  fileNamePrefix: 'research_stations',
+  fileFormat:'CSV'
+})
+
+var exportImage = aca.clip (IlotMaitre)
+Map.addLayer(exportImage)
+
+Export.image.toDrive({
+  image: exportImage, //FYI - type: Image
+  description: 'exportImageToDrive',
+  fileNamePrefix: 'aca_Ilotmaitre',
+  fileFormat:'GeoTIFF',
+  scale:5
+})
+

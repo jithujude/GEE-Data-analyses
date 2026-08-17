@@ -1,0 +1,40 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var image = ee.Image("NOAA/NGDC/ETOPO1");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+//Mapping the world’s deep ocean ecosystems
+var dataset = ee.Image("NOAA/NGDC/ETOPO1");
+print(dataset);
+
+var bedrock = dataset.select('bedrock');
+print('bedrock',bedrock);
+
+
+var Hadal = bedrock.lt(-6000).selfMask();
+Map.addLayer(Hadal, {palette: 'darkred'}, 'Hadal Trenches');
+
+var Abyssal_Plains = bedrock.gte(-6000) 
+.and(bedrock.lt(-3000))
+.selfMask();
+Map.addLayer(Abyssal_Plains, {palette: 'darkblue'}, 'Abyssal Plains');
+
+var Continental_Slopes = bedrock.gte(-3000)
+.and(bedrock.lt(-200))
+.selfMask();
+Map.addLayer(Continental_Slopes, {palette: 'blue'},'Continental and Island Slopes ');
+
+var slope = ee.Terrain.slope(bedrock);
+
+var Submarine_Canyons = bedrock.lte(-200)
+.and (slope.gte(6))
+.selfMask();
+Map.addLayer(Submarine_Canyons, {palette: 'yellow'}, 'Submarine Canyons');
+
+var Continental_Shelf = bedrock.gte(-200)
+.and(bedrock.lt(0))
+.selfMask();
+Map.addLayer(Continental_Shelf,{palette: 'green'}, 'Continental Shelf');
+
+var Land = bedrock.gte(0)
+.selfMask()
+Map.addLayer(Land, {palette:'black'}, 'Land');
+
