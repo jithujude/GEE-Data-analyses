@@ -1,0 +1,71 @@
+//
+print ('Hello, World!');
+
+var the_answer = 42; //number
+
+// Variables are used to store objects, and are defined using the keyword var.//
+
+var city = 'San Francisco';
+print(city)
+
+var population = 873965;
+print (population);
+
+print('The value for the population variable is:', population);
+
+var cities = ['San Francisco', 'Los Angeles', 'New York', 'Atlanta'];
+print (cities);
+//prints the cities in a list form in index of each item //
+
+var cityData = {
+    'city': 'San Francisco',
+    'coordinates': [-122.4194, 37.7749],
+    'population': 873965
+};
+// curly brackets creates dictionary//  
+print(cityData);
+
+//functions//
+
+// Functions can be defined as a way to reuse code and make it easier to read
+var my_hello_function = function(string) {
+  return 'Hello ' + string + '!';
+};
+print(my_hello_function('world'));
+
+var greet = function(name) {
+    return 'Hello ' + name;
+};
+print(greet('World'));
+print(greet('Readers'));
+
+// Earth engine Docs //
+
+var a = 1;
+var b = 2;
+print (a);
+var result = a + b;
+print (result,'javascript way')
+
+var result = ee.Number(a).add(b);
+print (result, 'Earth Engine way');
+
+// Earth engine api//
+//The function ee.List.sequence is used for generating a sequence of numbers from a given start value to the end value.// 
+
+var yearList = ee.List.sequence(1980, 2020, 5);
+print(yearList);
+
+//Data structures//
+//configuring maps//
+
+
+
+
+
+
+
+
+
+
+
